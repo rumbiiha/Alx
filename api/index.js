@@ -131,7 +131,7 @@ export const api = createApi({
     updateAddress: builder.mutation({
       query: ({ id, data }) => ({
         url: `address/${id}`, // Adjust to your actual endpoint for updating addresses
-        method: 'PUT',
+        method: 'PATCH',
         body: data,
       }),
     }),

@@ -95,7 +95,7 @@ const ShippingAddress = ({ addresses, refetch, createAddress, isLoading }) => {
               {shippingAddress.addressName},{shippingAddress.city},{shippingAddress.region}, Uganda
             </Text>
             <Text style={styles.addressLabel} category="c2">
-              Home
+              {shippingAddress.addressLabel || 'Home'}
             </Text>
           </View>
           <Divider style={{ marginVertical: 10 }} />
