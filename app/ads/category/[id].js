@@ -1,79 +1,18 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, ScrollView, SafeAreaView, Modal, TouchableOpacity, Image } from 'react-native';
-import { Layout, Text, Input, Button, RadioGroup, Radio, TopNavigationAction, useTheme } from '@ui-kitten/components';
+import { Layout, Text, Input, Button, Select, SelectItem } from '@ui-kitten/components';
 import { useGetProductsQuery } from '../../../api';
-import { FunnelSimple, ShoppingCart, MagnifyingGlass, SortAscending, Star, Heart } from 'phosphor-react-native';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useDispatch, useSelector } from 'react-redux';
-import { addToCart } from '@/store/cartSlice';
+import { ShoppingCart, MagnifyingGlass } from 'phosphor-react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import {useSelector } from 'react-redux';
+import { Appbar } from 'react-native-paper';
+import ProductCard from '@/components/products/ProductCard';
+import NoProductsFound from '../../../components/products/NoProductsFound';
 
-const NoProductsFound = ({ onExploreMore }) => {
-    return (
-        <View style={styles.noProductsContainer}>
-            <MagnifyingGlass size={48} color="#ccc" />
-            <Text category="h6" appearance='hint' style={styles.noProductsText}>
-                Sorry, there are no products available in this category at the moment.
-            </Text>
-            <Button onPress={onExploreMore} style={styles.exploreButton}>
-                Explore More
-            </Button>
-        </View>
-    );
-};
-
-
-const SkeletonLoader = () => {
-    const theme = useTheme();
-    return (
-        <View style={styles.skeletonCard}>
-            <View style={[styles.skeletonImageContainer, { backgroundColor: theme['color-basic-400'] }]}>
-                <Image
-                    source={require('../../../assets/placeholder.png')}
-                    style={styles.skeletonImage}
-                />
-            </View>
-            <View style={[styles.skeletonText, { backgroundColor: theme['color-basic-400'] }]} />
-            <View style={[styles.skeletonTextSmall, { backgroundColor: theme['color-basic-400'] }]} />
-            <View style={[styles.skeletonPrice, { backgroundColor: theme['color-basic-400'] }]} />
-        </View>
-    );
-};
-
-const ProductCard = ({ product }) => {
-    const router = useRouter();
-    const dispatch = useDispatch();
-    const theme = useTheme();
-
-    // Function to handle adding the product to the cart
-    const handleAddToCart = () => {
-        dispatch(addToCart(product));
-    };
-
-    return (
-        <TouchableOpacity style={styles.productCard} onPress={() => router.push(`/ads/${product._id}`)}>
-            <View style={styles.productImageContainer}>
-                <Image source={product.files.length !== 0 ? { uri: product.files[0]?.url } : require('../../../assets/placeholder.png')} style={[styles.productImage, { backgroundColor: theme['color-basic-400'] }]} />
-                {/* Add to Cart Button */}
-                <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
-                    <ShoppingCart size={16} color="white" weight="bold" />
-                </TouchableOpacity>
-            </View>
-            <Text style={styles.productTitle} numberOfLines={1} ellipsizeMode="tail">{product.title}</Text>
-            <View style={styles.ratingContainer}>
-                <Star size={16} color="orange" weight="fill" />
-                <Text style={styles.ratingText}>{product.rating || '4.7'}</Text>
-                <Text style={{ fontSize: 16, color: 'grey' }}> | </Text>
-                <Text style={[styles.soldText, { backgroundColor: theme['color-basic-400'] }]}>{product.sold} sold</Text>
-            </View>
-            <Text style={styles.productPrice}>UGX {product.price?.toLocaleString('en-UG')}</Text>
-        </TouchableOpacity>
-    );
-};
 
 const Ads = () => {
     const { id, category } = useLocalSearchParams();
-    const dispatch = useDispatch();
-    const router = useRouter()
+    const router = useRouter();
 
     const { data, isLoading, isError } = useGetProductsQuery(id ? { category: id } : {});
     const products = data?.data?.docs || [];
@@ -81,51 +20,18 @@ const Ads = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
-    const [selectedSort, setSelectedSort] = useState(0); // Default to first sort option
-    const [selectedRating, setSelectedRating] = useState(0); // Default to no rating filter
+    const [selectedSort, setSelectedSort] = useState(0);
+    const [selectedRating, setSelectedRating] = useState(0);
+    const [selectedCategory, setSelectedCategory] = useState(null);
 
     const cartItems = useSelector((state) => state.cart.items);
     const cartCount = cartItems.length;
 
-    const handleAddToCart = () => {
-        dispatch(addToCart({ ...product, selectedColor, selectedSize }));
-    };
-
     const sortOptions = ['Price: Low to High', 'Price: High to Low', 'Rating'];
-    const ratingOptions = ['4 stars & up', '3 stars & up', 'All Ratings'];
+    const ratingOptions = ['All Ratings', '4 stars & up', '3 stars & up'];
+    const categoryOptions = ['All Categories', 'Electronics', 'Clothing', 'Books', 'Home & Garden'];
 
     // Filtering and sorting logic
-    const filteredProducts = products
-        .filter(product => {
-            const priceCondition = (minPrice ? product.price >= Number(minPrice) : true) && (maxPrice ? product.price <= Number(maxPrice) : true);
-            const ratingCondition = (selectedRating === 0) || (selectedRating === 1 && product.rating >= 4) || (selectedRating === 2);
-            return priceCondition && ratingCondition;
-        })
-        .sort((a, b) => {
-            if (selectedSort === 0) return a.price - b.price; // Price: Low to High
-            if (selectedSort === 1) return b.price - a.price; // Price: High to Low
-            return (b.rating || 0) - (a.rating || 0); // Rating
-        });
-
-    if (isLoading) {
-        return (
-            <SafeAreaView style={styles.safeArea}>
-                <Layout style={styles.container}>
-                    <ScrollView contentContainerStyle={styles.productsContainer}>
-                        {/* Display multiple skeleton loaders */}
-                        {[...Array(6)].map((_, index) => (
-                            <SkeletonLoader key={index} />
-                        ))}
-                    </ScrollView>
-                </Layout>
-            </SafeAreaView>
-        );
-    }
-
-
-    if (isError) {
-        return <Text>Error loading products</Text>;
-    }
 
     const CartIconWithBadge = () => (
         <TouchableOpacity onPress={() => router.push('/cart')}>
@@ -140,57 +46,72 @@ const Ads = () => {
         </TouchableOpacity>
     );
 
-
     return (
         <>
-            <Stack.Screen
-                options={{
-                    title: category,
-                    headerRight: () => <TopNavigationAction icon={CartIconWithBadge} />,
-                }}
-            />
+            <Appbar.Header style={{backgroundColor:"white",borderBottomWidth:1,borderBottomColor:'gainsboro'}}>
+                <Appbar.BackAction onPress={() => { /* Handle back action */ }} />
+                <Appbar.Content title={category} />
+                <Appbar.Action
+                    icon={({ color }) => (
+                        <View style={styles.iconContainer}>
+                            <MagnifyingGlass size={24} color={color} />
+                        </View>
+                    )}
+                    onPress={() => { /* Handle search action */ }}
+                />
+                <Appbar.Action
+                    icon={({ color }) => (
+                        <View style={styles.iconContainer}>
+                            <CartIconWithBadge />
+                        </View>
+                    )}
+                    onPress={() => { /* Handle shopping action */ }}
+                />
+            </Appbar.Header>
+            
             <SafeAreaView style={styles.safeArea}>
                 <Layout style={styles.container}>
-                    {filteredProducts.length !== 0 && <View style={styles.topBar}>
-                        <Input style={styles.searchInput} placeholder="Search..." accessoryLeft={<MagnifyingGlass />} />
-                        <Button appearance='outline'  status='basic' style={{ height: 40 }} accessoryLeft={FunnelSimple} onPress={() => setModalVisible(true)} />
-                    </View>}
-
-                    {/* Modal for Sort & Filter */}
+                    {/* New Filter Buttons */}
+                    <View style={styles.filterButtonsContainer}>
+                        <Select
+                            style={styles.filterButton}
+                            placeholder="Sort"
+                            size='small'
+                            value={sortOptions[selectedSort]}
+                            onSelect={index => setSelectedSort(index.row)}
+                        >
+                            {sortOptions.map((option, index) => (
+                                <SelectItem key={index} title={option} />
+                            ))}
+                        </Select>
+                        <Select
+                            style={styles.filterButton}
+                            placeholder="Rating"
+                            size='small'
+                            value={ratingOptions[selectedRating]}
+                            onSelect={index => setSelectedRating(index.row)}
+                        >
+                            {ratingOptions.map((option, index) => (
+                                <SelectItem key={index} title={option} />
+                            ))}
+                        </Select>
+                        <Select
+                            style={styles.filterButton}
+                            placeholder="Category"
+                            size='small'
+                            value={selectedCategory}
+                            onSelect={index => setSelectedCategory(categoryOptions[index.row])}
+                        >
+                            {categoryOptions.map((option, index) => (
+                                <SelectItem key={index} title={option} />
+                            ))}
+                        </Select>
+                    </View>
+                    {/* Modal for Advanced Filters */}
                     <Modal visible={modalVisible} transparent={true} animationType="slide">
                         <View style={styles.modalContainer}>
                             <View style={styles.modalContent}>
-                                <Text category="h5" style={styles.modalTitle}>Sort & Filter</Text>
-
-                                {/* Sort By Section */}
-                                <Text category="label" style={styles.filterLabel}>Sort By</Text>
-                                <RadioGroup selectedIndex={selectedSort} onChange={index => setSelectedSort(index)}>
-                                    {sortOptions.map((option, index) => (
-                                        <Radio key={index}>
-                                            {() => (
-                                                <View style={styles.radioOption}>
-                                                    <SortAscending size={16} color="#333" />
-                                                    <Text style={styles.radioText}>{option}</Text>
-                                                </View>
-                                            )}
-                                        </Radio>
-                                    ))}
-                                </RadioGroup>
-
-                                {/* Rating Filter */}
-                                <Text category="label" style={styles.filterLabel}>Rating</Text>
-                                <RadioGroup selectedIndex={selectedRating} onChange={index => setSelectedRating(index)}>
-                                    {ratingOptions.map((option, index) => (
-                                        <Radio key={index}>
-                                            {() => (
-                                                <View style={styles.radioOption}>
-                                                    <Star size={16} color="orange" />
-                                                    <Text style={styles.radioText}>{option}</Text>
-                                                </View>
-                                            )}
-                                        </Radio>
-                                    ))}
-                                </RadioGroup>
+                                <Text category="h5" style={styles.modalTitle}>Advanced Filters</Text>
 
                                 {/* Price Range Filter */}
                                 <Text category="label" style={styles.filterLabel}>Price Range</Text>
@@ -216,8 +137,6 @@ const Ads = () => {
                                     <Button appearance='outline' onPress={() => {
                                         setMinPrice('');
                                         setMaxPrice('');
-                                        setSelectedSort(0);
-                                        setSelectedRating(0);
                                     }}>
                                         Reset
                                     </Button>
@@ -231,10 +150,10 @@ const Ads = () => {
 
                     {/* Products List */}
                     <ScrollView contentContainerStyle={styles.productsContainer}>
-                        {filteredProducts.length === 0 ? (
-                            <NoProductsFound onExploreMore={() => router.push('category')} />
+                        {products.length === 0 ? (
+                            <NoProductsFound  />
                         ) : (
-                            filteredProducts.map((product) => (
+                            products.map((product) => (
                                 <ProductCard key={product._id} product={product} />
                             ))
                         )}
@@ -245,24 +164,8 @@ const Ads = () => {
     );
 };
 
+
 const styles = StyleSheet.create({
-    productImageContainer: {
-        position: 'relative',
-    },
-    productImage: {
-        width: '100%',
-        height: 190,
-        borderRadius: 8,
-        marginBottom: 10,
-    },
-    addToCartButton: {
-        position: 'absolute',
-        top: 10,
-        right: 10,
-        backgroundColor: '#FF5656', // Adjust color as per your theme
-        padding: 7,
-        borderRadius: 50,
-    },
     cartIconContainer: {
         position: 'relative',
     },
@@ -380,60 +283,19 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         marginRight: 15,
     },
-    // Skeleton Loader Styles
-    skeletonCard: {
-        width: '48%',
+
+    filterButtonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        // paddingHorizontal: 10,
+        gap: 7,
+        paddingVertical: 3,
+        paddingBottom: 10,
         backgroundColor: 'white',
-        marginBottom: 10,
-        borderRadius: 8,
-        padding: 10,
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
     },
-    skeletonImageContainer: {
-        backgroundColor: '#f0f0f0',
-        borderRadius: 8,
-        marginBottom: 10,
-    },
-    skeletonImage: {
-        width: '100%',
-        height: 180,
-        borderRadius: 8,
-    },
-    skeletonText: {
-        width: '80%',
-        height: 20,
-        backgroundColor: '#f0f0f0',
-        borderRadius: 4,
-        marginBottom: 8,
-    },
-    skeletonTextSmall: {
-        width: '60%',
-        height: 15,
-        backgroundColor: '#f0f0f0',
-        borderRadius: 4,
-        marginBottom: 8,
-    },
-    skeletonPrice: {
-        width: '50%',
-        height: 20,
-        backgroundColor: '#f0f0f0',
-        borderRadius: 4,
-    },
-    noProductsContainer: {
+    filterButton: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-        margin: 'auto'
-    },
-    noProductsText: {
-        marginVertical: 10,
-        textAlign: 'center',
-        fontWeight: 'normal'
-    },
-    exploreButton: {
-        marginTop: 10,
+        // marginHorizontal: 5,
     },
 });
 

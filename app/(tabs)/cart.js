@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { SafeAreaView, ScrollView, View, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { Layout, Text, Button, Card, useTheme } from '@ui-kitten/components';
-import { Minus, Plus, Backspace, ShoppingCart, ArrowRight } from 'phosphor-react-native'; // Import icons from Phosphor
+import { ScrollView, View, Image, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { Layout } from '@ui-kitten/components';
+import { Minus, Plus, Backspace, ShoppingCart, Phone } from 'phosphor-react-native'; // Import Phone icon from Phosphor
 import { useDispatch, useSelector } from 'react-redux';
-import { removeFromCart, updateItemQuantity } from '../../store/cartSlice';
+import { removeFromCart, updateItemQuantity } from '@/store/cartSlice';
 import useLogin from '@/hooks/useLogin';
 import { useRouter } from 'expo-router';
+import { Appbar, useTheme, Text, Button } from 'react-native-paper'; // Import Appbar from Native Paper
 
-const CartScreen = ({ navigation }) => {
+const CartScreen = () => {
     const dispatch = useDispatch();
     const theme = useTheme();
     const router = useRouter();
@@ -15,7 +16,6 @@ const CartScreen = ({ navigation }) => {
 
     // Get cart items from Redux store
     const cartItems = useSelector(state => state.cart.items);
-    const [selectedItems, setSelectedItems] = useState([]);
 
     // Handle quantity changes for items in the cart
     const handleQuantityChange = (item, newQuantity) => {
@@ -39,21 +39,21 @@ const CartScreen = ({ navigation }) => {
     };
 
     const renderCartItem = (item) => (
-        <Layout style={{ marginBottom: 8, borderWidth: 1, borderColor: 'rgb(228, 233, 242)', borderRadius: 5, padding: 10, }} key={item._id}>
+        <Layout style={{ marginBottom: 8, borderWidth: 1, borderColor: 'rgb(228, 233, 242)', borderRadius: 5, padding: 10 }} key={item._id}>
             <View style={styles.cartItem}>
                 <Image
-                    source={require('../../assets/placeholder.png')}
+                    source={item.file ? { uri: item.file } : require('@/assets/placeholder.png')}
                     style={styles.productImage}
                 />
                 <View style={styles.productInfo}>
                     <View style={{ flexDirection: 'row' }}>
-                        <Text style={{ fontSize: 14, flexGrow: 1 }} numberOfLines={1} ellipsizeMode='tail' >{item.title}</Text>
+                        <Text style={{ fontSize: 14, flexGrow: 1 }} numberOfLines={1} ellipsizeMode='tail'>{item.title}</Text>
                         <TouchableOpacity style={styles.removeIcon} onPress={() => handleRemoveItem(item)}>
                             <Backspace size={25} color={theme['color-basic-600']} />
                         </TouchableOpacity>
                     </View>
                     <Text appearance='hint'>{`Color: ${item?.selectedColor?.colorName || '--'}`}</Text>
-                    <Text appearance='hint'>{`Size: ${item?.selectedSize || '--'}`}</Text>
+                    <Text appearance='hint' style={{ marginVertical: 2 }}>{`Qty: ${item.quantity || 1}`}</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                         <Text category='s1' style={[styles.price, { color: theme['color-primary-default'] }]}>UGX {item.price.toLocaleString()}</Text>
                         <View style={styles.quantityContainer}>
@@ -74,7 +74,6 @@ const CartScreen = ({ navigation }) => {
                             />
                         </View>
                     </View>
-
                 </View>
             </View>
         </Layout>
@@ -82,16 +81,35 @@ const CartScreen = ({ navigation }) => {
 
     const renderEmptyCartMessage = () => (
         <View style={styles.emptyCartContainer}>
-            <ShoppingCart size={48} color={theme['color-primary-default']} weight="duotone" />
+            <ShoppingCart size={48} color={theme['color-primary-default']} />
             <Text category='s1' style={styles.emptyCartText}>Your cart is empty!</Text>
-            <Button size='small'>
+            <Button onPress={() => router.push('/')}>
                 Shop Now
             </Button>
         </View>
     );
 
+    // Function to call support
+    const callSupport = () => {
+        const phoneNumber = 'tel:0200922167'; // Replace with the actual support phone number
+        Linking.openURL(phoneNumber).catch(err => console.error("Error calling support:", err));
+    };
+
     return (
         <Layout style={styles.container}>
+            <Appbar.Header style={{ borderColor: 'gainsboro', borderWidth: 1, paddingRight: 15 }}>
+                <Appbar.BackAction onPress={() => router.back()} />
+                <Appbar.Content title="My Cart" />
+                <View style={styles.contactContainer}>
+                    <Phone
+                        size={24}
+                        color={theme.colors.primary}
+                        onPress={() => callSupport()}
+                    />
+                    <Text style={styles.contactText} variant="labelLarge">0200922167</Text>
+                </View>
+            </Appbar.Header>
+
             {cartItems.length === 0 ? (
                 renderEmptyCartMessage()
             ) : (
@@ -106,7 +124,7 @@ const CartScreen = ({ navigation }) => {
                                 UGX {getTotalPrice().toLocaleString()}
                             </Text>
                         </View>
-                        <Button style={styles.checkoutButton} onPress={() => router.push(isLoggedIn?'checkout':'otpRegister')}>
+                        <Button style={styles.checkoutButton} onPress={() => router.push(isLoggedIn ? 'checkout' : 'register')}>
                             Checkout
                         </Button>
                     </Layout>
@@ -121,6 +139,11 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: 'white',
     },
+    appbar: {
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: 'gainsboro'
+    },
     cartItem: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -128,10 +151,6 @@ const styles = StyleSheet.create({
         position: 'relative', // For positioning remove icon
     },
     removeIcon: {
-        // position: 'absolute',
-        // top: -15,
-        // right: -20,
-        // width: 30,
         marginLeft: 10,
         zIndex: 1, // Ensure the icon is above other elements
     },
@@ -183,6 +202,10 @@ const styles = StyleSheet.create({
         marginBottom: 32,
         fontSize: 18,
         color: '#8F9BB3',
+    },
+    contactContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
 });
 

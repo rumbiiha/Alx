@@ -62,24 +62,24 @@ export default function TabLayout() {
         name="cart"
         options={{
           title: 'Cart',
-          headerShown: true,
-          tabBarIcon: ({ color, focused }) => (
-            <View style={styles.iconWithBadge}>
-              <ShoppingCart size={24} color={color} weight={focused ? 'fill' : 'regular'} style={styles.icon} />
-              {cartCount > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{cartCount}</Text>
-                </View>
-              )}
-            </View>
-          ),
+          headerShown: false,
+          // tabBarIcon: ({ color, focused }) => (
+          //   <View style={styles.iconWithBadge}>
+          //     <ShoppingCart size={24} color={color} weight={focused ? 'fill' : 'regular'} style={styles.icon} />
+          //     {cartCount > 0 && (
+          //       <View style={styles.badge}>
+          //         <Text style={styles.badgeText}>{cartCount}</Text>
+          //       </View>
+          //     )}
+          //   </View>
+          // ),
         }}
       />
       <Tabs.Screen
         name="account"
         options={{
           title: 'Account',
-          headerShown: true,
+          headerShown: false,
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()}>
               <ArrowLeft size={24} color={activeTintColor} style={styles.backIcon} />

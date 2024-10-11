@@ -8,14 +8,14 @@ import { useMakePaymentMutation } from '../api'
 
 const DepositProcessing = () => {
     const theme = useTheme(); // Access the theme colors
-    const { amount, msisdn } = useLocalSearchParams();
+    const { amount, msisdn, orderId } = useLocalSearchParams();
     const [payNow] = useMakePaymentMutation()
     const router = useRouter()
 
 
     const fetchData = async () => {
         try {
-            payNow({ amount, msisdn })
+            payNow({ amount, msisdn, orderId })
         } catch (error) {
             // return displayErrorNotification()
             console.log('error.message===', error.message)

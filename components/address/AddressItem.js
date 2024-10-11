@@ -5,7 +5,7 @@ import { MapPin, User, Phone, Envelope, PencilSimple, Trash } from 'phosphor-rea
 import { Divider } from 'react-native-paper';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
-const AddressItem = ({ address, handleEditAddress, refetch, isMainAddress, onMainSelect }) => {
+const AddressItem = ({ address, handleEditAddress, refetch, isMainAddress, onMainSelect, viewOnly }) => {
   const theme = useTheme();
   const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
 
@@ -24,11 +24,11 @@ const AddressItem = ({ address, handleEditAddress, refetch, isMainAddress, onMai
         <Text style={styles.addressLabel} category="c2">
           {address.addressLabel || 'Home'}
         </Text>
-        <Radio
+        {!viewOnly && <Radio
           style={styles.radio}
           checked={isMainAddress}
           onChange={onMainSelect}
-        />
+        />}
       </View>
       <Divider style={{ marginVertical: 10 }} />
       <Layout style={styles.actionRow}>
@@ -52,7 +52,7 @@ const AddressItem = ({ address, handleEditAddress, refetch, isMainAddress, onMai
             </Text>
           </View>
         </View>
-        <View style={styles.actionButtons}>
+        {!viewOnly && <View style={styles.actionButtons}>
           <Button
             appearance="ghost"
             accessoryLeft={() => <PencilSimple size={20} color="#8F9BB3" />}
@@ -64,7 +64,7 @@ const AddressItem = ({ address, handleEditAddress, refetch, isMainAddress, onMai
             onDelete={handleDeleteAddress}
             address={address}
           />
-        </View>
+        </View>}
       </Layout>
 
     </Layout>

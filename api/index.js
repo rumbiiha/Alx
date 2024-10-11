@@ -29,9 +29,10 @@ export const api = createApi({
     baseUrl: 'https://simple-maggot-expert.ngrok-free.app/api/v1/',
     prepareHeaders: async (headers, { getState }) => {
       // Retrieve cookies from AsyncStorage
-      const storedCookies = await AsyncStorage.getItem('access_token')
+      const storedCookies = await AsyncStorage.getItem('@user')
       if (storedCookies) {
-        headers.set('access_token', storedCookies)
+        console.log('storedCookies.token', JSON.parse(storedCookies).token)
+        headers.set('access_token', JSON.parse(storedCookies).token)
       }
       return headers
     },
@@ -113,24 +114,24 @@ export const api = createApi({
       }),
     }),
     getAddress: builder.query({
-      query: () => 'address', // Adjust to your actual endpoint for fetching addresses
+      query: () => 'address',
     }),
     createAddress: builder.mutation({
       query: (addressData) => ({
-        url: 'address', // Adjust to your actual endpoint for creating addresses
+        url: 'address',
         method: 'POST',
         body: addressData,
       }),
     }),
     deleteAddress: builder.mutation({
       query: (addressId) => ({
-        url: `address/${addressId}`, // Adjust to your actual endpoint for deleting addresses
+        url: `address/${addressId}`,
         method: 'DELETE',
       }),
     }),
     updateAddress: builder.mutation({
       query: ({ id, data }) => ({
-        url: `address/${id}`, // Adjust to your actual endpoint for updating addresses
+        url: `address/${id}`,
         method: 'PATCH',
         body: data,
       }),
@@ -165,28 +166,21 @@ export const api = createApi({
         body: data,
       }),
     }),
+    getOrders: builder.query({
+      query:() => `/orders/me`,
+    }),
+    getOrderDetails: builder.query({
+      query: (orderId) => `/orders/${orderId}`,
+    }),
+    createOrder: builder.mutation({
+      query: (data) => ({
+        url: '/orders',
+        method: 'POST',
+        body: data,
+      }),
+    }),
   }),
 })
-
-// const customMiddleware = (api) => (next) => async (action) => {
-//   console.log('===========');
-//   if (action.type.endsWith('rejected')) {
-//     // Extract error message from action payload
-//     const errorMessage = action.error.message;
-//     // Handle error message here, e.g., show alert or log
-//     console.log(errorMessage);
-//   }
-//   if (action.type === api.internalActions.requestSuccess.type) {
-//     // Extract cookies from response headers
-//     const cookies = action.payload.response.headers.get('access_token')
-//     if (cookies) {
-
-//       // Save cookies to AsyncStorage
-//       await AsyncStorage.setItem('access_token', cookies)
-//     }
-//   }
-//   return next(action)
-// }
 
 export const {
   useGetProductFiltersQuery,
@@ -212,4 +206,7 @@ export const {
   useSendOtpMutation,
   useVerifyOtpMutation,
   useRegisterMutation,
+  useCreateOrderMutation,
+  useGetOrdersQuery,
+  useGetOrderDetailsQuery,
 } = api

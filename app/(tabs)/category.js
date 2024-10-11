@@ -83,19 +83,20 @@ const CategorySreen = ({ route }) => {
                 <Appbar.Action
                     icon={({ color }) => (
                         <View style={styles.iconContainer}>
-                            <ShoppingCart size={24} color={color} /> {/* Customize color */}
-                        </View>
-                    )}
-                    onPress={() => { /* Handle shopping action */ }}
-                />
-                <Appbar.Action
-                    icon={({ color }) => (
-                        <View style={styles.iconContainer}>
                             <MagnifyingGlass size={24} color={color} />
                         </View>
                     )}
                     onPress={() => { /* Handle search action */ }}
                 />
+                <Appbar.Action
+                    icon={({ color }) => (
+                        <View style={styles.iconContainer}>
+                            <ShoppingCart size={24} color={color} /> {/* Customize color */}
+                        </View>
+                    )}
+                    onPress={() => { /* Handle shopping action */ }}
+                />
+                
             </Appbar.Header>
             <View style={styles.container}>
                 <Layout style={styles.sidebar}>

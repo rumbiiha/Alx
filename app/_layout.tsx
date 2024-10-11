@@ -42,7 +42,9 @@ export default function RootLayout() {
     // Specify custom property in nested object
     colors: {
       ...DefaultTheme.colors,
-      myOwnColor: '#BADA55',
+      primary: '#FF3333',
+      background: '#FF3333',
+      surface: '#FFFFFF',
     },
   };
 
@@ -73,13 +75,17 @@ export default function RootLayout() {
     'font-family': 'SFPro',
   };
 
+
   return (
     <Provider store={store}>
     <ApplicationProvider {...eva} theme={{ ...eva.light, ...cThemeRed }}>
     <PaperProvider theme={theme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="ads/[id]" />
+        <Stack.Screen name="cart" />
         <Stack.Screen name="+not-found" />
+        {/* <Stack.Screen name="+not-found" /> */}
       </Stack>
     </PaperProvider>
     </ApplicationProvider>

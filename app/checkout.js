@@ -1,69 +1,113 @@
-import React, { useEffect, useState } from 'react';
-import { SafeAreaView, ScrollView, View, Image, StyleSheet, Modal, TouchableOpacity } from 'react-native';
-import { Layout, Text, Button, useTheme, Divider } from '@ui-kitten/components';
+import React, { useEffect } from 'react';
+import { SafeAreaView, ScrollView, View, StyleSheet } from 'react-native';
+import { Appbar, Text, Button, useTheme } from 'react-native-paper';
 import { useSelector } from 'react-redux';
 import { router } from 'expo-router';
-import { useCreateAddressMutation, useGetAddressQuery } from '../api';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 import ShippingAddress from '../components/checkout/AddressSection';
 import ShippingOptions from '../components/checkout/ShippingSection';
 import OrderItems from '../components/checkout/OrderItemsSection';
+import { Phone } from 'phosphor-react-native';
+import { useCreateOrderMutation } from '@/api';
 
 const CheckoutScreen = () => {
-
     const cartItems = useSelector(state => state.cart.items);
     const theme = useTheme();
+    const [createOrder, { isLoading, data }] = useCreateOrderMutation();
+    const [payNowLoading, setPayNowLoading] = React.useState(false);
+    const [userId, setUserId] = React.useState('');
+    const [selectedAddressId, setSelectedAddressId] = React.useState('');
+
+    // Fetch user and selected address ID from local storage
+    useEffect(() => {
+        const fetchUserAndAddress = async () => {
+            try {
+                const user = await AsyncStorage.getItem('@user'); // Fetch @user object
+                const address = await AsyncStorage.getItem('selectedAddress'); // Fetch selected address ID
+                if (user) {
+                    const parsedUser = JSON.parse(user);
+                    setUserId(parsedUser.user._id); // Assuming the user object has an _id field
+                }
+                if (address) {
+                    const parsedAddress = JSON.parse(address);
+                    setSelectedAddressId(parsedAddress._id); // Set selected address ID
+                }
+            } catch (error) {
+                console.error('Failed to fetch user or address:', error);
+            }
+        };
+
+        fetchUserAndAddress();
+    }, []);
 
     const getTotalPrice = () => {
         return cartItems.reduce((total, item) => total + item.price * (item.quantity || 1), 0);
     };
 
-    const order = {
-        "orderId": "ORD12345678",
-        "shippingAddress": {
-            "addressLine1": "123 Main St",
-            "addressLine2": "Apt 4B",
-            "city": "Kampala",
-            "state": "Central",
-            "country": "Uganda",
-            "postalCode": "12345",
-            "isDefault": true,
-            "label": "Home"
-        },
-        "items": [],
-        "payment": {
-            "method": "Credit Card",
-            "transactionId": "TX1234567890",
-            "totalAmount": 80.00,
-            "currency": "USD"
-        },
-        "orderStatus": "Pending",
-        "shippingMethod": {
-            "method": "Standard Shipping",
-            "cost": 5.00,
-            "currency": "USD",
-            "estimatedDelivery": "2024-10-10T12:00:00Z"
+    const handlePayNow = async () => {
+        setPayNowLoading(true); // Start loading
+
+
+        const orderData = {
+            items: cartItems,
+            userId: userId, // Add user ID from local storage
+            userAddressId: selectedAddressId, // Add selected address ID from local storage
+            total: getTotalPrice() + 10000,
+            paymentType:'Mobile Money'
+        };
+        try {
+            const res = await createOrder(orderData).unwrap(); // Execute the mutation
+            console.log('data', res.data._id)
+            router.push({ pathname: 'payments', params: {orderId: res.data._id, amount: getTotalPrice() + 10000 } });
+        } catch (error) {
+            console.error('Error creating order:', error);
+        } finally {
+            setPayNowLoading(false); // Stop loading regardless of success or failure
         }
-    }
+    };
 
     return (
         <SafeAreaView style={styles.container}>
+            <Appbar.Header style={{ borderColor: 'gainsboro', borderWidth: 1, paddingRight: 15 }}>
+                <Appbar.BackAction />
+                <Appbar.Content title="Checkout" />
+                <View style={styles.contactContainer}>
+                    <Phone
+                        size={24}
+                        color={theme.colors.primary}
+                        onPress={() => {
+                            // Implement the functionality to contact support
+                            console.log('Contact Support: +256123456789');
+                        }}
+                    />
+                    <Text style={styles.contactText} variant="labelLarge">0200922167</Text>
+                </View>
+            </Appbar.Header>
             <ScrollView style={styles.content}>
                 <ShippingAddress />
                 <OrderItems cartItems={cartItems} theme={theme} />
                 <ShippingOptions theme={theme} />
             </ScrollView>
-            <Layout style={styles.footer}>
+            <View style={styles.footer}>
                 <View>
-                    <Text category='s1'>Total</Text>
-                    <Text category='h6' style={{ ...styles.totalPrice, color: theme['color-primary-default'] }}>UGX {(getTotalPrice() + 10000).toLocaleString()}</Text>
+                    <Text variant='titleMedium'>Total</Text>
+                    <Text variant="headlineMedium" style={{ ...styles.totalPrice, color: theme.colors.primary }}>
+                        UGX {(getTotalPrice() + 10000).toLocaleString()}
+                    </Text>
                 </View>
-                <Button onPress={() => router.push({ pathname: 'payments', params: { amount: (getTotalPrice() + 10000) } })} style={styles.checkoutButton}>Pay Now</Button>
-            </Layout>
-
+                <Button
+                    mode="contained"
+                    onPress={handlePayNow}
+                    loading={payNowLoading} // Loading state for the button
+                    style={styles.checkoutButton}
+                    disabled={payNowLoading} // Disable the button while loading
+                >
+                    Pay Now
+                </Button>
+            </View>
         </SafeAreaView>
     );
 };
-
 
 const styles = StyleSheet.create({
     container: {
@@ -73,7 +117,6 @@ const styles = StyleSheet.create({
     content: {
         // padding: 16,
     },
-
     footer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -87,40 +130,17 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     checkoutButton: {
-        // flex: 1,
         marginLeft: 16,
     },
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        padding: 16,
+    contactContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
-    modalContent: {
-        backgroundColor: 'white',
-        borderRadius: 8,
-        padding: 16,
-        gap: 5,
+    contactText: {
+        marginLeft: 8,
+        fontSize: 16,
+        // color: 'black',
     },
-    input: {
-        marginBottom: 16,
-    },
-    saveButton: {
-        marginTop: 16,
-    },
-    addressLabel: {
-        marginLeft: 10,
-        paddingHorizontal: 6,
-        paddingVertical: 4,
-        backgroundColor: '#EDF1F7',
-        borderRadius: 6,
-    },
-    contact: {
-        marginTop: 8,
-    },
-    addAddressButton: {
-        marginTop: 16,
-    }
 });
 
 export default CheckoutScreen;

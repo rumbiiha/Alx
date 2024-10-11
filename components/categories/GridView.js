@@ -3,12 +3,12 @@ import {
   View,
   TouchableOpacity,
   StyleSheet,
-  Image,
 } from 'react-native';
 import { useGetCategoriesQuery } from '../../api';
 import { useNavigation } from '@react-navigation/native';
 import { Text } from '@ui-kitten/components';
 import { useRouter } from 'expo-router';
+import AppImg from '../AppImg';
 
 const PlaceholderItem = () => {
   return (
@@ -30,7 +30,7 @@ const GridScreen = () => {
       style={styles.item}
       onPress={() => router.push(`/category/${item.id}?index=${index}`)}
     >
-      <Image source={{ uri: item.imageUrl }} style={styles.image} />
+      <AppImg source={{ uri: item.imageUrl }}  style={styles.image} />
       <Text
         style={styles.itemText}
         numberOfLines={1}
